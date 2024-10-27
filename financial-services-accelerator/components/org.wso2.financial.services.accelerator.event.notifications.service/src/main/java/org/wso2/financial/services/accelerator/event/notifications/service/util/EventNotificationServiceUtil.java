@@ -27,15 +27,11 @@ import org.json.JSONObject;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
-import org.wso2.financial.services.accelerator.common.config.FinancialServicesConfigParser;
-import org.wso2.financial.services.accelerator.common.util.FinancialServicesUtils;
 import org.wso2.financial.services.accelerator.common.util.Generated;
 import org.wso2.financial.services.accelerator.consent.mgt.service.impl.ConsentCoreServiceImpl;
 import org.wso2.financial.services.accelerator.event.notifications.service.constants.EventNotificationConstants;
 import org.wso2.financial.services.accelerator.event.notifications.service.dto.EventNotificationErrorDTO;
 import org.wso2.financial.services.accelerator.event.notifications.service.exception.FSEventNotificationException;
-import org.wso2.financial.services.accelerator.event.notifications.service.handler.DefaultEventCreationServiceHandler;
-import org.wso2.financial.services.accelerator.event.notifications.service.service.EventNotificationGenerator;
 
 import java.util.Optional;
 
@@ -47,17 +43,6 @@ public class EventNotificationServiceUtil {
     private static final Log log = LogFactory.getLog(EventNotificationServiceUtil.class);
     private static volatile ConsentCoreServiceImpl consentCoreService;
 
-    /**
-     * This method is used to send the polling generator as per config.
-     *
-     * @return EventNotificationGenerator
-     */
-    public static EventNotificationGenerator getEventNotificationGenerator() {
-
-        return (EventNotificationGenerator)
-                FinancialServicesUtils.getClassInstanceFromFQN(FinancialServicesConfigParser.getInstance()
-                        .getEventNotificationGenerator());
-    }
 
     /**
      * This method is used to send the default realtime event notification request generator.
@@ -140,15 +125,6 @@ public class EventNotificationServiceUtil {
     public static String getCallbackURL(String clientID) {
 
         return "http://localhost:8080/sample-tpp-server";
-    }
-
-    /**
-     * Get the default event creation service handler.
-     *
-     * @return DefaultEventCreationServiceHandler
-     */
-    public static DefaultEventCreationServiceHandler getDefaultEventCreationServiceHandler() {
-        return new DefaultEventCreationServiceHandler();
     }
 
     /**
