@@ -18,17 +18,16 @@
 
 package org.wso2.financial.services.accelerator.event.notifications.endpoint.api;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.wso2.financial.services.accelerator.common.config.FinancialServicesConfigParser;
-import org.wso2.financial.services.accelerator.common.util.Generated;
-import org.wso2.financial.services.accelerator.event.notifications.endpoint.constants.EventNotificationEndPointConstants;
-import org.wso2.financial.services.accelerator.event.notifications.endpoint.util.EventNotificationUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.wso2.financial.services.accelerator.common.config.FinancialServicesConfigParser;
+import org.wso2.financial.services.accelerator.event.notifications.endpoint.constants.EventNotificationEndPointConstants;
+import org.wso2.financial.services.accelerator.event.notifications.endpoint.util.EventNotificationUtils;
 import org.wso2.financial.services.accelerator.event.notifications.service.constants.EventNotificationConstants;
 import org.wso2.financial.services.accelerator.event.notifications.service.dto.EventPollingDTO;
 import org.wso2.financial.services.accelerator.event.notifications.service.handler.EventPollingServiceHandler;

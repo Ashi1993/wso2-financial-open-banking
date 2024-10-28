@@ -526,6 +526,11 @@
                 <artifactId>org.wso2.financial.services.accelerator.identity.extensions</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.financial.services.accelerator</groupId>
+                <artifactId>org.wso2.financial.services.accelerator.event.notifications.service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- Test Dependencies -->
             <dependency>
                 <groupId>org.testng</groupId>

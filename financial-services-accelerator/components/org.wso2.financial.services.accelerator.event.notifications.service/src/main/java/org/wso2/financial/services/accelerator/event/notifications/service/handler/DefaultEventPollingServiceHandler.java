@@ -20,7 +20,6 @@ package org.wso2.financial.services.accelerator.event.notifications.service.hand
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.wso2.financial.services.accelerator.common.config.FinancialServicesConfigParser;
 import org.wso2.financial.services.accelerator.common.util.Generated;
@@ -31,10 +30,8 @@ import org.wso2.financial.services.accelerator.event.notifications.service.excep
 import org.wso2.financial.services.accelerator.event.notifications.service.model.AggregatedPollingResponse;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventPolling;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventPollingResponse;
-import org.wso2.financial.services.accelerator.event.notifications.service.model.NotificationError;
 import org.wso2.financial.services.accelerator.event.notifications.service.util.EventNotificationServiceUtil;
 
-import java.util.Locale;
 
 /**
  * This is the service handler for event polling.

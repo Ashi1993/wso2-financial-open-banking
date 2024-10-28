@@ -18,7 +18,6 @@
 
 package org.wso2.financial.services.accelerator.event.notifications.service.handler;
 
-import org.json.JSONObject;
 import org.wso2.financial.services.accelerator.event.notifications.service.dto.EventPollingDTO;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventPollingResponse;
 
@@ -36,12 +35,5 @@ public interface EventPollingServiceHandler {
      * @return EventPollingResponse to the polling endpoint.
      */
     EventPollingResponse pollEvents(EventPollingDTO eventPollingDTO);
-
-    /**
-     * This method is used to map the eventPollingRequest to EventPollingDTO.
-     * @param eventPollingRequest JSON request for event polling
-     * @return eventPollingDTO with the request parameters.
-     */
-    EventPollingDTO mapPollingRequest(JSONObject eventPollingRequest);
 
 }
