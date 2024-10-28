@@ -18,328 +18,77 @@
 
 package org.wso2.financial.services.accelerator.event.notifications.service.handler;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpStatus;
 import org.json.JSONObject;
-import org.wso2.financial.services.accelerator.event.notifications.service.EventSubscriptionService;
-import org.wso2.financial.services.accelerator.event.notifications.service.constants.EventNotificationConstants;
 import org.wso2.financial.services.accelerator.event.notifications.service.dto.EventSubscriptionDTO;
-import org.wso2.financial.services.accelerator.event.notifications.service.exception.FSEventNotificationException;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventSubscription;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventSubscriptionResponse;
-import org.wso2.financial.services.accelerator.event.notifications.service.util.EventNotificationServiceUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * This is the default service handler for event notification subscription.
+ * EventSubscription Service handler is used to validate subscription requests before calling the
+ * subscription service. For custom validations this class can be extended and the extended class
+ * can be added to the deployment.toml under event_subscription_handler to execute the specific class.
  */
-public class DefaultEventSubscriptionServiceHandler implements EventSubscriptionServiceHandler {
-    private static final Log log = LogFactory.getLog(DefaultEventSubscriptionServiceHandler.class);
-
-    private EventSubscriptionService eventSubscriptionService = new EventSubscriptionService();
-
-    public void setEventSubscriptionService(EventSubscriptionService eventSubscriptionService) {
-        this.eventSubscriptionService = eventSubscriptionService;
-    }
+public interface EventSubscriptionServiceHandler {
 
     /**
-     * This method is used to create event subscriptions.
+     * This method is used to create event subscriptions in the accelerator database. The method is a generic
+     * method that is used to persist data into the NOTIFICATION_SUBSCRIPTION and NOTIFICATION_SUBSCRIPTION_EVENT
+     * tables.
      *
-     * @param eventSubscriptionRequestDto    Event Subscription DTO
-     * @return EventSubscriptionResponse     Event Subscription Response
+     * @param eventSubscriptionRequestDto The request DTO that contains the subscription details.
+     * @return For successful request the API will return a JSON with the subscriptionId
      */
-    public EventSubscriptionResponse createEventSubscription(EventSubscriptionDTO eventSubscriptionRequestDto) {
-        EventSubscriptionResponse eventSubscriptionResponse = new EventSubscriptionResponse();
-
-        EventSubscriptionResponse clientIdValidation = validateClientId(eventSubscriptionRequestDto.getClientId());
-        // check whether clientIdValidation is not null, then return the error response
-        if (clientIdValidation != null) {
-            return clientIdValidation;
-        }
-
-        EventSubscription eventSubscription = mapEventSubscriptionDtoToModel(eventSubscriptionRequestDto);
-
-        try {
-            EventSubscription createEventSubscriptionResponse = eventSubscriptionService.
-                    createEventSubscription(eventSubscription);
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_CREATED);
-            eventSubscriptionResponse.
-                    setResponseBody(mapSubscriptionModelToResponseJson(createEventSubscriptionResponse));
-            return eventSubscriptionResponse;
-        } catch (FSEventNotificationException e) {
-            log.error("Error occurred while creating event subscription", e);
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                    EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            return eventSubscriptionResponse;
-        }
-
-    }
+    EventSubscriptionResponse createEventSubscription(EventSubscriptionDTO eventSubscriptionRequestDto);
 
     /**
-     * This method is used to retrieve a single event subscription.
+     * This method is used to retrieve an event subscription by its subscription ID.
      *
-     * @param clientId                      Client ID of the subscription created
-     * @param subscriptionId                Subscription ID of the subscription created
-     * @return EventSubscriptionResponse    Event Subscription Response containing subscription
-     *                                      details for the given subscription ID
+     * @param clientId The client ID of the subscription.
+     * @param subscriptionId The subscription ID of the subscription.
+     * @return For successful request the API will return a JSON with the retrieved Subscription.
      */
-    public EventSubscriptionResponse getEventSubscription(String clientId, String subscriptionId) {
-        EventSubscriptionResponse eventSubscriptionResponse = new EventSubscriptionResponse();
-
-        EventSubscriptionResponse clientIdValidation = validateClientId(clientId);
-        // check whether clientIdValidation is not null, then return the error response
-        if (clientIdValidation != null) {
-            return clientIdValidation;
-        }
-
-        try {
-            EventSubscription eventSubscription = eventSubscriptionService.
-                    getEventSubscriptionBySubscriptionId(subscriptionId);
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_OK);
-            eventSubscriptionResponse.setResponseBody(mapSubscriptionModelToResponseJson(eventSubscription));
-            return eventSubscriptionResponse;
-        } catch (FSEventNotificationException e) {
-            log.error("Error occurred while retrieving event subscription", e);
-            if (e.getMessage().equals(EventNotificationConstants.EVENT_SUBSCRIPTION_NOT_FOUND)) {
-                eventSubscriptionResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                        EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            } else {
-                eventSubscriptionResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-                eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                        EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            }
-            return eventSubscriptionResponse;
-        }
-    }
+    EventSubscriptionResponse getEventSubscription(String clientId, String subscriptionId);
 
     /**
      * This method is used to retrieve all event subscriptions of a client.
      *
-     * @param clientId                       Client ID
-     * @return EventSubscriptionResponse     Event Subscription Response containing all the subscriptions
+     * @param clientId The client ID of the subscription.
+     * @return For successful request the API will return a JSON with the retrieved Subscriptions.
      */
-    public EventSubscriptionResponse getAllEventSubscriptions(String clientId) {
-        EventSubscriptionResponse eventSubscriptionResponse = new EventSubscriptionResponse();
-
-        EventSubscriptionResponse clientIdValidation = validateClientId(clientId);
-        // check whether clientIdValidation is not null, then return the error response
-        if (clientIdValidation != null) {
-            return clientIdValidation;
-        }
-
-        try {
-            List<EventSubscription> eventSubscriptionList = eventSubscriptionService.
-                    getEventSubscriptionsByClientId(clientId);
-            List<JSONObject> eventSubscriptionResponseList = new ArrayList<>();
-            for (EventSubscription eventSubscription : eventSubscriptionList) {
-                eventSubscriptionResponseList.add(mapSubscriptionModelToResponseJson(eventSubscription));
-            }
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_OK);
-            eventSubscriptionResponse.setResponseBody(eventSubscriptionResponseList);
-            return eventSubscriptionResponse;
-        } catch (FSEventNotificationException e) {
-            log.error("Error occurred while retrieving event subscriptions", e);
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                    EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            return eventSubscriptionResponse;
-        }
-    }
+    EventSubscriptionResponse getAllEventSubscriptions(String clientId);
 
     /**
      * This method is used to retrieve all event subscriptions by event type.
      *
-     * @param clientId                      Client ID
-     * @param eventType                     Event Type to retrieve subscriptions
-     * @return EventSubscriptionResponse    Event Subscription Response containing subscriptions per specified
-     *                                      event type
+     * @param clientId The client ID of the subscription.
+     * @param eventType The event type that needs to be subscribed by the retrieving subscriptions.
+     * @return For successful request the API will return a JSON with the retrieved Subscriptions.
      */
-    public EventSubscriptionResponse getEventSubscriptionsByEventType(String clientId, String eventType) {
-        EventSubscriptionResponse eventSubscriptionResponse = new EventSubscriptionResponse();
-
-        EventSubscriptionResponse clientIdValidation = validateClientId(clientId);
-        // check whether clientIdValidation is not null, then return the error response
-        if (clientIdValidation != null) {
-            return clientIdValidation;
-        }
-
-        try {
-            List<EventSubscription> eventSubscriptionList = eventSubscriptionService.
-                    getEventSubscriptionsByEventType(eventType);
-            List<JSONObject> eventSubscriptionResponseList = new ArrayList<>();
-            for (EventSubscription eventSubscription : eventSubscriptionList) {
-                eventSubscriptionResponseList.add(mapSubscriptionModelToResponseJson(eventSubscription));
-            }
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_OK);
-            eventSubscriptionResponse.setResponseBody(eventSubscriptionResponseList);
-            return eventSubscriptionResponse;
-        } catch (FSEventNotificationException e) {
-            log.error("Error occurred while retrieving event subscriptions", e);
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                    EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            return eventSubscriptionResponse;
-        }
-    }
+    EventSubscriptionResponse getEventSubscriptionsByEventType(String clientId, String eventType);
 
     /**
      * This method is used to update an event subscription.
      *
-     * @param eventSubscriptionUpdateRequestDto     Event Subscription Update Request DTO
-     * @return EventSubscriptionResponse            Event Subscription Response containing the updated subscription
+     * @param eventSubscriptionUpdateRequestDto The request DTO that contains the updating subscription details.
+     * @return For successful request the API will return a JSON with the updated Subscription.
      */
-    public EventSubscriptionResponse updateEventSubscription(EventSubscriptionDTO eventSubscriptionUpdateRequestDto) {
-        EventSubscriptionResponse eventSubscriptionResponse = new EventSubscriptionResponse();
-
-        EventSubscriptionResponse clientIdValidation = validateClientId(eventSubscriptionUpdateRequestDto.
-                getClientId());
-        // check whether clientIdValidation is not null, then return the error response
-        if (clientIdValidation != null) {
-            return clientIdValidation;
-        }
-
-        EventSubscription eventSubscription = mapEventSubscriptionDtoToModel(eventSubscriptionUpdateRequestDto);
-
-        try {
-            Boolean isUpdated = eventSubscriptionService.updateEventSubscription(eventSubscription);
-            if (!isUpdated) {
-                eventSubscriptionResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                        EventNotificationConstants.INVALID_REQUEST,
-                        "Event subscription not found."));
-                return eventSubscriptionResponse;
-            }
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_OK);
-            EventSubscription eventSubscriptionUpdateResponse = eventSubscriptionService.
-                    getEventSubscriptionBySubscriptionId(eventSubscriptionUpdateRequestDto.getSubscriptionId());
-            eventSubscriptionResponse.
-                    setResponseBody(mapSubscriptionModelToResponseJson(eventSubscriptionUpdateResponse));
-            return eventSubscriptionResponse;
-        } catch (FSEventNotificationException e) {
-            log.error("Error occurred while updating event subscription", e);
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                    EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            return eventSubscriptionResponse;
-        }
-    }
+    EventSubscriptionResponse updateEventSubscription(EventSubscriptionDTO eventSubscriptionUpdateRequestDto);
 
     /**
      * This method is used to delete an event subscription.
      *
-     * @param clientId                      Client ID
-     * @param subscriptionId                Subscription ID to be deleted
-     * @return EventSubscriptionResponse    Event Subscription Response containing the deleted subscription
+     * @param clientId The client ID of the subscription.
+     * @param subscriptionId The subscription ID of the subscription.
+     * @return For successful request the API will an OK response.
      */
-    public EventSubscriptionResponse deleteEventSubscription(String clientId, String subscriptionId) {
-        EventSubscriptionResponse eventSubscriptionResponse = new EventSubscriptionResponse();
-
-        EventSubscriptionResponse clientIdValidation = validateClientId(clientId);
-        // check whether clientIdValidation is not null, then return the error response
-        if (clientIdValidation != null) {
-            return clientIdValidation;
-        }
-        try {
-            Boolean isDeleted = eventSubscriptionService.deleteEventSubscription(subscriptionId);
-            if (!isDeleted) {
-                eventSubscriptionResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                        EventNotificationConstants.INVALID_REQUEST,
-                        "Event subscription not found"));
-                return eventSubscriptionResponse;
-            }
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_NO_CONTENT);
-            return eventSubscriptionResponse;
-        } catch (FSEventNotificationException e) {
-            log.error("Error occurred while deleting event subscription", e);
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                    EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            return eventSubscriptionResponse;
-        }
-    }
-
-    /**
-     * This method is used to validate the client ID.
-     *
-     * @param clientId                      Client ID
-     * @return EventSubscriptionResponse    Return EventSubscriptionResponse if the client ID is
-     *                                      invalid, if the client ID is valid, null will be returned.
-     */
-    private EventSubscriptionResponse validateClientId(String clientId) {
-        try {
-            EventNotificationServiceUtil.validateClientId(clientId);
-        } catch (FSEventNotificationException e) {
-            log.error("Invalid client ID", e);
-            EventSubscriptionResponse eventSubscriptionResponse = new EventSubscriptionResponse();
-            eventSubscriptionResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-            eventSubscriptionResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                    EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            return eventSubscriptionResponse;
-        }
-        return null;
-    }
-
-    /**
-     * This method will map the event subscription DTO to event subscription model
-     * to be passed to the dao layer.
-     *
-     * @param eventSubscriptionDTO      Event Subscription DTO
-     * @return EventSubscription        Event Subscription Model mapped
-     */
-    private EventSubscription mapEventSubscriptionDtoToModel(EventSubscriptionDTO eventSubscriptionDTO) {
-        EventSubscription eventSubscription = new EventSubscription();
-
-        eventSubscription.setSubscriptionId(eventSubscriptionDTO.getSubscriptionId());
-
-        JSONObject payload = eventSubscriptionDTO.getRequestData();
-        List<String> eventTypes = new ArrayList<>();
-        Object eventTypesObj = payload.get(EventNotificationConstants.EVENT_TYPE_PARAM);
-        if (eventTypesObj instanceof List) {
-            List<?> eventTypesList = (List<?>) eventTypesObj;
-            for (Object item : eventTypesList) {
-                if (item instanceof String) {
-                    eventTypes.add((String) item);
-                }
-            }
-        }
-        eventSubscription.setEventTypes(eventTypes);
-        eventSubscription.setCallbackUrl(payload.get(EventNotificationConstants.CALLBACK_URL_PARAM) != null ?
-                payload.get(EventNotificationConstants.CALLBACK_URL_PARAM).toString() : null);
-        eventSubscription.setSpecVersion(payload.get(EventNotificationConstants.VERSION_PARAM) != null ?
-                payload.get(EventNotificationConstants.VERSION_PARAM).toString() : null);
-        eventSubscription.setClientId(eventSubscriptionDTO.getClientId());
-        eventSubscription.setRequestData(payload.toString());
-        return eventSubscription;
-    }
+    EventSubscriptionResponse deleteEventSubscription(String clientId, String subscriptionId);
 
     /**
      * This method is used to create the response JSON object from the event subscription model.
      *
-     * @param eventSubscription     Event Subscription Model
-     * @return JSONObject containing mapped subscription
+     * @param eventSubscription The event subscription model.
+     * @return JSONObject
      */
-    public JSONObject mapSubscriptionModelToResponseJson(EventSubscription eventSubscription) {
-        JSONObject responsePayload = new JSONObject();
+    JSONObject mapSubscriptionModelToResponseJson(EventSubscription eventSubscription);
 
-        if (eventSubscription.getSubscriptionId() != null) {
-            responsePayload.put(EventNotificationConstants.SUBSCRIPTION_ID_PARAM,
-                    eventSubscription.getSubscriptionId());
-        }
-        if (eventSubscription.getCallbackUrl() != null) {
-            responsePayload.put(EventNotificationConstants.CALLBACK_URL_PARAM, eventSubscription.getCallbackUrl());
-        }
-        if (eventSubscription.getSpecVersion() != null) {
-            responsePayload.put(EventNotificationConstants.VERSION_PARAM, eventSubscription.getSpecVersion());
-        }
-        if (eventSubscription.getEventTypes() != null) {
-            responsePayload.put(EventNotificationConstants.EVENT_TYPE_PARAM, eventSubscription.getEventTypes());
-        }
-        return responsePayload;
-    }
 }
