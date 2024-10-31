@@ -20,6 +20,7 @@ package org.wso2.financial.services.accelerator.event.notifications.service.hand
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 import org.json.JSONObject;
 import org.wso2.financial.services.accelerator.common.config.FinancialServicesConfigParser;
 import org.wso2.financial.services.accelerator.common.util.Generated;
@@ -31,7 +32,6 @@ import org.wso2.financial.services.accelerator.event.notifications.service.model
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventPolling;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventPollingResponse;
 import org.wso2.financial.services.accelerator.event.notifications.service.util.EventNotificationServiceUtil;
-
 
 /**
  * This is the service handler for event polling.
@@ -52,35 +52,30 @@ public class DefaultEventPollingServiceHandler implements EventPollingServiceHan
      * @param eventPollingDTO Event polling DTO
      * @return  EventPollingResponse
      */
-    public EventPollingResponse pollEvents(EventPollingDTO eventPollingDTO) {
-
-        EventPollingResponse eventPollingResponse = new EventPollingResponse();
+    public EventPollingResponse pollEvents(EventPollingDTO eventPollingDTO) throws FSEventNotificationException {
 
         //Validate clientID of the polling request
         try {
             EventNotificationServiceUtil.validateClientId(eventPollingDTO.getClientId());
         } catch (FSEventNotificationException e) {
-            log.error("Invalid client ID", e);
-            eventPollingResponse.setStatus(EventNotificationConstants.BAD_REQUEST);
-            eventPollingResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                            EventNotificationConstants.INVALID_REQUEST, String.format("A client was not found" +
-                            " for the client id : '%s' in the database.. ", eventPollingDTO.getClientId())));
-            return eventPollingResponse;
+            String errorMessage = String.format("A client was not found for the client id : '%s' in the database. ",
+                    eventPollingDTO.getClientId().replaceAll("[\r\n]", ""));
+            log.error(errorMessage, e);
+            throw new FSEventNotificationException(HttpStatus.SC_BAD_REQUEST, errorMessage, e);
         }
 
         EventPolling eventPolling = mapEventPollingDtoToModel(eventPollingDTO);
         //Poll events
         try {
             AggregatedPollingResponse aggregatedPollingResponse = eventPollingService.pollEvents(eventPolling);
+
+            EventPollingResponse eventPollingResponse = new EventPollingResponse();
             eventPollingResponse.setStatus(aggregatedPollingResponse.getStatus());
             eventPollingResponse.setResponseBody(getPollingResponseJSON(aggregatedPollingResponse));
             return eventPollingResponse;
         } catch (FSEventNotificationException e) {
             log.error("OB Event Notification error" , e);
-            eventPollingResponse.setStatus(EventNotificationConstants.BAD_REQUEST);
-            eventPollingResponse.setErrorResponse(EventNotificationServiceUtil.getErrorDTO(
-                    EventNotificationConstants.INVALID_REQUEST, e.getMessage()));
-            return eventPollingResponse;
+            throw new FSEventNotificationException(HttpStatus.SC_BAD_REQUEST, e.getMessage(), e);
         }
 
     }

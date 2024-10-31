@@ -19,7 +19,6 @@
 package org.wso2.financial.services.accelerator.event.notifications.endpoint.api;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,8 +27,10 @@ import org.wso2.financial.services.accelerator.event.notifications.endpoint.cons
 import org.wso2.financial.services.accelerator.event.notifications.endpoint.util.EventNotificationUtils;
 import org.wso2.financial.services.accelerator.event.notifications.service.constants.EventNotificationConstants;
 import org.wso2.financial.services.accelerator.event.notifications.service.dto.NotificationCreationDTO;
+import org.wso2.financial.services.accelerator.event.notifications.service.exception.FSEventNotificationException;
 import org.wso2.financial.services.accelerator.event.notifications.service.handler.EventCreationServiceHandler;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventCreationResponse;
+import org.wso2.financial.services.accelerator.event.notifications.service.util.EventNotificationServiceUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -68,8 +69,6 @@ public class EventCreationEndpoint {
     @Path("/create-events")
     @Consumes({"application/x-www-form-urlencoded"})
     @Produces({"application/json; charset=utf-8"})
-
-    @ApiOperation(value = "Create Events", tags = {" Create Events"})
     public Response createEvents(@Context HttpServletRequest request, @Context HttpServletResponse response,
                                  MultivaluedMap parameterMap) {
 
@@ -91,9 +90,9 @@ public class EventCreationEndpoint {
                 log.debug("Decoded payload string : " + decodedString.replaceAll("[\r\n]", ""));
 
             } else {
-
-                return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                        EventNotificationEndPointConstants.MISSING_REQUEST_PAYLOAD,
+                log.error(EventNotificationEndPointConstants.MISSING_REQUEST_PAYLOAD);
+                return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil
+                        .getErrorDTO(EventNotificationEndPointConstants.MISSING_REQUEST_PAYLOAD,
                         EventNotificationConstants.MISSING_REQ_PAYLOAD)).build();
             }
 
@@ -103,8 +102,8 @@ public class EventCreationEndpoint {
                 notificationCreationDTO.setClientId(request.getHeader(
                         EventNotificationEndPointConstants.X_WSO2_CLIENT_ID));
             } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                        EventNotificationEndPointConstants.MISSING_REQUEST_HEADER,
+                return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil
+                        .getErrorDTO(EventNotificationEndPointConstants.MISSING_REQUEST_HEADER,
                         EventNotificationConstants.MISSING_HEADER_PARAM_CLIENT_ID)).build();
             }
 
@@ -112,15 +111,15 @@ public class EventCreationEndpoint {
             String resourceId = request.getHeader(EventNotificationEndPointConstants.X_WSO2_RESOURCE_ID);
             if (!StringUtils.isBlank(resourceId)) {
                 if (StringUtils.containsAny(resourceId, specialChars)) {
-                    return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                            EventNotificationEndPointConstants.INVALID_REQUEST_HEADER,
+                    return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil.
+                            getErrorDTO(EventNotificationEndPointConstants.INVALID_REQUEST_HEADER,
                             EventNotificationConstants.INVALID_CHARS_IN_HEADER_ERROR)).build();
                 }
                 notificationCreationDTO.setResourceId(request.getHeader(
                         EventNotificationEndPointConstants.X_WSO2_RESOURCE_ID));;
             } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                        EventNotificationEndPointConstants.MISSING_REQUEST_HEADER,
+                return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil.
+                        getErrorDTO(EventNotificationEndPointConstants.MISSING_REQUEST_HEADER,
                         EventNotificationConstants.MISSING_HEADER_PARAM_RESOURCE_ID)).build();
             }
 
@@ -131,17 +130,23 @@ public class EventCreationEndpoint {
                 notificationCreationDTO.setEventPayload(eventName, eventInformation);
             });
 
+
+            EventCreationResponse eventCreationResponse = eventCreationServiceHandler.
+                    publishEvent(notificationCreationDTO);
+
+            return EventNotificationUtils.mapEventCreationServiceResponse(eventCreationResponse);
+
         } catch (ClassCastException e) {
             log.error(EventNotificationEndPointConstants.REQUEST_PAYLOAD_ERROR, e);
-            return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils
+            return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil
                     .getErrorDTO(EventNotificationEndPointConstants.INVALID_REQUEST_PAYLOAD,
                             EventNotificationEndPointConstants.REQUEST_PAYLOAD_ERROR)).build();
+        } catch (FSEventNotificationException e) {
+            return Response.status(e.getStatus()).entity(EventNotificationServiceUtil
+                    .getErrorDTO(EventNotificationEndPointConstants.INVALID_REQUEST,
+                            e.getMessage())).build();
         }
 
-        EventCreationResponse eventCreationResponse = eventCreationServiceHandler.
-                publishEvent(notificationCreationDTO);
-
-        return EventNotificationUtils.mapEventCreationServiceResponse(eventCreationResponse);
     }
 
 }

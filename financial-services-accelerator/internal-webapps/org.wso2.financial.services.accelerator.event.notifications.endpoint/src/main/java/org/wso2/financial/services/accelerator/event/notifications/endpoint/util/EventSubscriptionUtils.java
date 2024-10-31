@@ -19,21 +19,17 @@
 package org.wso2.financial.services.accelerator.event.notifications.endpoint.util;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpStatus;
 import org.json.JSONObject;
 import org.wso2.financial.services.accelerator.common.config.FinancialServicesConfigParser;
 import org.wso2.financial.services.accelerator.common.constant.FinancialServicesConstants;
 import org.wso2.financial.services.accelerator.common.util.FinancialServicesUtils;
-import org.wso2.financial.services.accelerator.event.notifications.service.constants.EventNotificationConstants;
 import org.wso2.financial.services.accelerator.event.notifications.service.handler.EventSubscriptionServiceHandler;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventSubscriptionResponse;
-import org.wso2.financial.services.accelerator.event.notifications.service.util.EventNotificationServiceUtil;
 
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
-
 
 /**
  * Events Notification Subscription API Utils.
@@ -67,24 +63,12 @@ public class EventSubscriptionUtils {
      * @return Response
      */
     public static Response mapEventSubscriptionServiceResponse(EventSubscriptionResponse eventSubscriptionResponse) {
-        int status = eventSubscriptionResponse.getStatus();
-        if (HttpStatus.SC_NO_CONTENT == status) {
-            return Response.status(status)
+        if (eventSubscriptionResponse.getResponseBody() != null) {
+            return Response.status(eventSubscriptionResponse.getResponseStatus())
+                    .entity(eventSubscriptionResponse.getResponseBody().toString())
                     .build();
-        } else if (eventSubscriptionResponse.getErrorResponse() == null) {
-            if (eventSubscriptionResponse.getResponseBody() != null) {
-                return Response.status(status)
-                        .entity(eventSubscriptionResponse.getResponseBody())
-                        .build();
-            } else {
-                return Response.status(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                        .entity(EventNotificationServiceUtil.getErrorDTO(EventNotificationConstants.INVALID_REQUEST,
-                                EventNotificationConstants.ERROR_HANDLING_EVENT_SUBSCRIPTION))
-                        .build();
-            }
         } else {
-            return Response.status(status)
-                    .entity(eventSubscriptionResponse.getErrorResponse())
+            return Response.status(eventSubscriptionResponse.getResponseStatus())
                     .build();
         }
     }

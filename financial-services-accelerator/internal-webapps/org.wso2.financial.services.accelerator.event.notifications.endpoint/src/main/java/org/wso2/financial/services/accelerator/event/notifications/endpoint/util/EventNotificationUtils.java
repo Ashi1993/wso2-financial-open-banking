@@ -25,11 +25,11 @@ import org.wso2.financial.services.accelerator.common.constant.FinancialServices
 import org.wso2.financial.services.accelerator.common.util.FinancialServicesUtils;
 import org.wso2.financial.services.accelerator.event.notifications.endpoint.constants.EventNotificationEndPointConstants;
 import org.wso2.financial.services.accelerator.event.notifications.service.constants.EventNotificationConstants;
-import org.wso2.financial.services.accelerator.event.notifications.service.dto.EventNotificationErrorDTO;
 import org.wso2.financial.services.accelerator.event.notifications.service.handler.EventCreationServiceHandler;
 import org.wso2.financial.services.accelerator.event.notifications.service.handler.EventPollingServiceHandler;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventCreationResponse;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventPollingResponse;
+import org.wso2.financial.services.accelerator.event.notifications.service.util.EventNotificationServiceUtil;
 
 import javax.ws.rs.core.Response;
 
@@ -71,16 +71,12 @@ public class EventNotificationUtils {
 
         if (EventNotificationConstants.CREATED.equals(eventCreationResponse.getStatus())) {
 
-            return Response.status(Response.Status.CREATED).entity(eventCreationResponse.getResponseBody()).build();
+            return Response.status(Response.Status.CREATED)
+                    .entity(eventCreationResponse.getResponseBody().toString()).build();
 
-        } else if (EventNotificationConstants.BAD_REQUEST.equals(eventCreationResponse.getStatus())) {
-
-            return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                    EventNotificationEndPointConstants.INVALID_REQUEST,
-                    eventCreationResponse.getErrorResponse())).build();
         }
 
-        return Response.status(Response.Status.BAD_REQUEST).entity(getErrorDTO(
+        return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil.getErrorDTO(
                 EventNotificationEndPointConstants.INVALID_REQUEST,
                 EventNotificationEndPointConstants.EVENT_CREATION_ERROR_RESPONSE)).build();
     }
@@ -92,32 +88,13 @@ public class EventNotificationUtils {
      */
     public static Response mapEventPollingServiceResponse(EventPollingResponse eventPollingResponse) {
 
+        String responseBody = eventPollingResponse.getResponseBody().toString();
         if (EventNotificationConstants.OK.equals(eventPollingResponse.getStatus())) {
-            return Response.status(Response.Status.OK).entity(eventPollingResponse.getResponseBody()).build();
+            return Response.status(Response.Status.OK).entity(responseBody).build();
         } else if (EventNotificationConstants.NOT_FOUND.equals(eventPollingResponse.getStatus())) {
-            return Response.status(Response.Status.NOT_FOUND).entity(eventPollingResponse.getResponseBody()).build();
-        } else {
-            if (eventPollingResponse.getErrorResponse() instanceof String) {
-                return Response.status(getErrorResponseStatus(eventPollingResponse.getStatus()))
-                        .entity(EventNotificationUtils.getErrorDTO(EventNotificationEndPointConstants.INVALID_REQUEST,
-                                eventPollingResponse.getErrorResponse().toString())).build();
-            } else {
-                return Response.status(getErrorResponseStatus(eventPollingResponse.getStatus()))
-                        .entity(eventPollingResponse.getErrorResponse())
-                        .build();
-            }
+            return Response.status(Response.Status.NOT_FOUND).entity(responseBody).build();
         }
-    }
-
-    /**
-     * Method to map Event Polling Service error to API response.
-     * @return EventNotificationErrorDTO
-     */
-    public static EventNotificationErrorDTO getErrorDTO(String error, String errorDescription) {
-        EventNotificationErrorDTO eventNotificationErrorDTO = new EventNotificationErrorDTO();
-        eventNotificationErrorDTO.setError(error);
-        eventNotificationErrorDTO.setErrorDescription(errorDescription);
-        return eventNotificationErrorDTO;
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 
     /**

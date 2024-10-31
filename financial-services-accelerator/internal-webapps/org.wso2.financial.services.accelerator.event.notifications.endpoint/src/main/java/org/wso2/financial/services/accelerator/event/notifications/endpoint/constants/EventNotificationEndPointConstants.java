@@ -22,20 +22,15 @@ package org.wso2.financial.services.accelerator.event.notifications.endpoint.con
  * Constants in Endpoint.
  */
 public class EventNotificationEndPointConstants {
-    public static final String X_WSO2_CLIENT_ID = "x-wso2-client_id";
-    public static final String X_WSO2_RESOURCE_ID = "x-wso2-resource_id";
+    public static final String X_WSO2_CLIENT_ID = "x-wso2-client-id";
+    public static final String X_WSO2_RESOURCE_ID = "x-wso2-resource-id";
     public static final String REQUEST = "request";
-    public static final String NOT_FOUND_RESPONSE = "No OPEN notifications founds for the given clientID";
-    public static final String POLLING_ERROR_RESPONSE = "OB Event Notification Polling error";
-    public static final String EVENT_CREATION_ERROR_RESPONSE = "OB Event Notification Creation error";
+    public static final String EVENT_CREATION_ERROR_RESPONSE = "Event Notification Creation error";
     public static final String REQUEST_PAYLOAD_ERROR = "Error in the request payload";
     public static final String EMPTY_REQ_PAYLOAD = "Request payload cannot be empty";
     public static final String INVALID_REQUEST = "invalid_request";
     public static final String INVALID_REQUEST_PAYLOAD = "invalid_request_payload";
     public static final String MISSING_REQUEST_PAYLOAD = "missing_request_payload";
-    public static final String MISSING_JSON_REQUEST_PAYLOAD = "missing_Json_request_payload";
     public static final String INVALID_REQUEST_HEADER = "invalid_request_header";
     public static final String MISSING_REQUEST_HEADER = "missing_request_header";
-    public static final String ERROR_PAYLOAD_PARSE = "Error while parsing payload";
-    public static final String NOTIFICATIONS_NOT_FOUND = "notification_not_found";
 }

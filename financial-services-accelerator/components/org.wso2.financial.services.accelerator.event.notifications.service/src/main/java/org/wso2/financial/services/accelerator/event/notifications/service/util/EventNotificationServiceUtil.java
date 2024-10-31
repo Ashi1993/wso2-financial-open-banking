@@ -33,7 +33,6 @@ import org.wso2.financial.services.accelerator.common.util.Generated;
 import org.wso2.financial.services.accelerator.consent.mgt.service.impl.ConsentCoreServiceImpl;
 import org.wso2.financial.services.accelerator.event.notifications.service.EventNotificationGenerator;
 import org.wso2.financial.services.accelerator.event.notifications.service.constants.EventNotificationConstants;
-import org.wso2.financial.services.accelerator.event.notifications.service.dto.EventNotificationErrorDTO;
 import org.wso2.financial.services.accelerator.event.notifications.service.exception.FSEventNotificationException;
 
 import java.util.Optional;
@@ -146,12 +145,12 @@ public class EventNotificationServiceUtil {
      *
      * @param error             Error code
      * @param errorDescription  Error description
-     * @return EventNotificationErrorDTO
+     * @return String error response
      */
-    public static EventNotificationErrorDTO getErrorDTO(String error, String errorDescription) {
-        EventNotificationErrorDTO eventNotificationErrorDTO = new EventNotificationErrorDTO();
-        eventNotificationErrorDTO.setError(error);
-        eventNotificationErrorDTO.setErrorDescription(errorDescription);
-        return eventNotificationErrorDTO;
+    public static String getErrorDTO(String error, String errorDescription) {
+        JSONObject eventNotificationError = new JSONObject();
+        eventNotificationError.put(EventNotificationConstants.ERROR_FIELD, error);
+        eventNotificationError.put(EventNotificationConstants.ERROR_DESCRIPTION_FIELD, errorDescription);
+        return eventNotificationError.toString();
     }
 }

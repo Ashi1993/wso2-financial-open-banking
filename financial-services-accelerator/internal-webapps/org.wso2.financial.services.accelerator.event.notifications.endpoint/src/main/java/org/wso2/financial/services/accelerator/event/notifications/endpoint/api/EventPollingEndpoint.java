@@ -30,9 +30,11 @@ import org.wso2.financial.services.accelerator.event.notifications.endpoint.cons
 import org.wso2.financial.services.accelerator.event.notifications.endpoint.util.EventNotificationUtils;
 import org.wso2.financial.services.accelerator.event.notifications.service.constants.EventNotificationConstants;
 import org.wso2.financial.services.accelerator.event.notifications.service.dto.EventPollingDTO;
+import org.wso2.financial.services.accelerator.event.notifications.service.exception.FSEventNotificationException;
 import org.wso2.financial.services.accelerator.event.notifications.service.handler.EventPollingServiceHandler;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.EventPollingResponse;
 import org.wso2.financial.services.accelerator.event.notifications.service.model.NotificationError;
+import org.wso2.financial.services.accelerator.event.notifications.service.util.EventNotificationServiceUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -93,13 +95,13 @@ public class EventPollingEndpoint {
                     eventPollingRequest = new JSONObject(decodedString);
 
                     //check if the client id is present in the header
-                    String clientId = request.getHeader(EventNotificationConstants.X_WSO2_CLIENT_ID);
+                    String clientId = request.getHeader(EventNotificationEndPointConstants.X_WSO2_CLIENT_ID);
                     if (!StringUtils.isBlank(clientId)) {
-                        eventPollingRequest.put(EventNotificationConstants.X_WSO2_CLIENT_ID, request.
-                                getHeader(EventNotificationConstants.X_WSO2_CLIENT_ID));
+                        eventPollingRequest.put(EventNotificationEndPointConstants.X_WSO2_CLIENT_ID, request.
+                                getHeader(EventNotificationEndPointConstants.X_WSO2_CLIENT_ID));
                     } else {
-                        return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                                EventNotificationEndPointConstants.MISSING_REQUEST_HEADER,
+                        return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil
+                                .getErrorDTO(EventNotificationEndPointConstants.MISSING_REQUEST_HEADER,
                                 EventNotificationConstants.MISSING_HEADER_PARAM_CLIENT_ID)).build();
                     }
 
@@ -111,18 +113,22 @@ public class EventPollingEndpoint {
 
                 } catch (ClassCastException e) {
                     log.error(EventNotificationEndPointConstants.REQUEST_PAYLOAD_ERROR, e);
-                    return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                            EventNotificationEndPointConstants.INVALID_REQUEST_PAYLOAD,
+                    return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil
+                            .getErrorDTO(EventNotificationEndPointConstants.INVALID_REQUEST_PAYLOAD,
                             EventNotificationEndPointConstants.REQUEST_PAYLOAD_ERROR)).build();
+                } catch (FSEventNotificationException e) {
+                    return Response.status(e.getStatus()).entity(EventNotificationServiceUtil
+                            .getErrorDTO(EventNotificationEndPointConstants.INVALID_REQUEST,
+                                    e.getMessage())).build();
                 }
             } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                        EventNotificationEndPointConstants.INVALID_REQUEST_PAYLOAD,
+                return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil
+                        .getErrorDTO(EventNotificationEndPointConstants.INVALID_REQUEST_PAYLOAD,
                         EventNotificationEndPointConstants.EMPTY_REQ_PAYLOAD)).build();
             }
         } else {
-            return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationUtils.getErrorDTO(
-                    EventNotificationEndPointConstants.MISSING_REQUEST_PAYLOAD,
+            return Response.status(Response.Status.BAD_REQUEST).entity(EventNotificationServiceUtil
+                    .getErrorDTO(EventNotificationEndPointConstants.MISSING_REQUEST_PAYLOAD,
                     EventNotificationConstants.MISSING_REQ_PAYLOAD)).build();
         }
     }
