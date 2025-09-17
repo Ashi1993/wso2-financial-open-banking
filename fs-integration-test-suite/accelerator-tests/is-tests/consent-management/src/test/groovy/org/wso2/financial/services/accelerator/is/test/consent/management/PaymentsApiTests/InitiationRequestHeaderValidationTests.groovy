@@ -302,6 +302,7 @@ class InitiationRequestHeaderValidationTests extends FSConnectorTest{
                 .post(consentPath)
 
 
+        configuration.setTppNumber(1)
         String clientId2 = createApplication(configuration.getAppDCRSoftwareId(), ConnectorTestConstants.PKJWT_AUTH_METHOD)
 
         //initiation request 2
@@ -324,5 +325,6 @@ class InitiationRequestHeaderValidationTests extends FSConnectorTest{
                         "Hence this is not a valid idempotent request")
 
         deleteApplication(clientId2, ConnectorTestConstants.PKJWT_AUTH_METHOD)
+        configuration.setTppNumber(0)
     }
 }
