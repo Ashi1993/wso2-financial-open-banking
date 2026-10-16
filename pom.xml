@@ -52,10 +52,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <configuration>
-                            <sourcepath>src/main/java</sourcepath>
-                            <sourceFileIncludes>
-                                <include>**/RegistrationErrorDTO.java</include>
-                            </sourceFileIncludes>
+                            <source>1.8</source>
                         </configuration>
                         <executions>
                             <execution>
@@ -63,6 +60,10 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
+                                <configuration>
+                                    <!--This parameter disables doclint-->
+                                    <doclint>none</doclint>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
